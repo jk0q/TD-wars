@@ -22,6 +22,10 @@ let activeTab = 'build';
 let hoverCell = null;
 let lastResearchKey = '';     // pour rafraîchir les onglets sans tout reconstruire
 
+// Tactile : le placement se fait en deux taps (aperçu puis confirmation)
+const IS_TOUCH = matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window;
+let pendingCell = null;       // case en attente de confirmation (tactile)
+
 const canvas = $('board');
 initRender(canvas);
 
@@ -242,14 +246,21 @@ function renderBuildTab(c) {
       if (!unlocked) return toast('error', `Requiert la recherche ${RESEARCH[def.req.branch].name} niv. ${def.req.lvl}`);
       selectedTowerId = null;
       placingType = placingType === type ? null : type;
+      pendingCell = null;
       canvas.classList.toggle('placing', !!placingType);
+      updatePlaceBanner();
       renderTab();
+      if (placingType && IS_TOUCH) {
+        canvas.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
     };
     c.appendChild(card);
   }
   const hint = document.createElement('p');
   hint.className = 'hint';
-  hint.textContent = 'Cliquez une tour puis une case libre. Échap ou clic droit pour annuler. Cliquez une tour posée pour l\'améliorer, la vendre ou la combiner.';
+  hint.textContent = IS_TOUCH
+    ? 'Touchez une tour, puis une case libre (un 1er tap montre l\'aperçu, un 2e confirme). Touchez une tour posée pour l\'améliorer, la vendre ou la combiner.'
+    : 'Cliquez une tour puis une case libre. Échap ou clic droit pour annuler. Cliquez une tour posée pour l\'améliorer, la vendre ou la combiner.';
   c.appendChild(hint);
 }
 
@@ -425,17 +436,40 @@ function cellFromEvent(e) {
 canvas.addEventListener('mousemove', (e) => { hoverCell = cellFromEvent(e); });
 canvas.addEventListener('mouseleave', () => { hoverCell = null; });
 
+function cancelPlacement() {
+  placingType = null;
+  pendingCell = null;
+  canvas.classList.remove('placing');
+  updatePlaceBanner();
+  renderTab();
+}
+
+function updatePlaceBanner() {
+  const b = $('place-banner');
+  if (placingType && IS_TOUCH) {
+    b.textContent = `✕ Annuler — ${TOWERS[placingType].name}`;
+    b.classList.remove('hidden');
+    b.onclick = cancelPlacement;
+  } else {
+    b.classList.add('hidden');
+  }
+}
+
 canvas.addEventListener('click', (e) => {
   if (viewedId !== myId) return; // spectateur : pas d'interaction
   const cell = cellFromEvent(e);
   if (!cell) return;
   if (placingType) {
-    socket.emit('build', { x: cell.x, y: cell.y, type: placingType });
-    if (!e.shiftKey) {
-      placingType = null;
-      canvas.classList.remove('placing');
-      renderTab();
+    // Tactile : 1er tap = aperçu sur la case, 2e tap sur la même case = construire
+    if (IS_TOUCH && (!pendingCell || pendingCell.x !== cell.x || pendingCell.y !== cell.y)) {
+      pendingCell = cell;
+      hoverCell = cell;
+      return;
     }
+    socket.emit('build', { x: cell.x, y: cell.y, type: placingType });
+    pendingCell = null;
+    if (IS_TOUCH) hoverCell = null;              // reste en mode placement (pratique au doigt)
+    else if (!e.shiftKey) cancelPlacement();     // souris : Maj+clic pour enchaîner
     return;
   }
   const m = me();
@@ -446,19 +480,15 @@ canvas.addEventListener('click', (e) => {
 
 canvas.addEventListener('contextmenu', (e) => {
   e.preventDefault();
-  placingType = null;
+  cancelPlacement();
   selectedTowerId = null;
-  canvas.classList.remove('placing');
-  renderTab();
   renderSelection();
 });
 
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
-    placingType = null;
+    cancelPlacement();
     selectedTowerId = null;
-    canvas.classList.remove('placing');
-    renderTab();
     renderSelection();
   }
 });

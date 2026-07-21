@@ -1,0 +1,16 @@
+{
+  "name": "TD Wars — Tower Defense Wars multijoueur",
+  "short_name": "TD Wars",
+  "description": "Tower Defense Wars multijoueur : défendez votre couloir, envoyez des monstres chez vos adversaires, boostez votre income !",
+  "start_url": "/",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#14161f",
+  "theme_color": "#14161f",
+  "lang": "fr",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

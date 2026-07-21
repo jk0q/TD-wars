@@ -21,6 +21,42 @@ arrivent alors sur votre propre terrain).
 npm test           # test de fumée bout-en-bout (serveur + 2 clients simulés)
 ```
 
+## 📱 Jouer sur Android (téléphone / tablette)
+
+Le jeu est entièrement tactile et fonctionne comme une **PWA** (application
+web installable) :
+
+1. Lancez le serveur (`npm start`) — il affiche l'adresse réseau local à
+   utiliser (ex. `http://192.168.1.42:3000`).
+2. Sur le téléphone (même Wi-Fi), ouvrez cette adresse dans Chrome.
+3. Menu ⋮ → **« Ajouter à l'écran d'accueil »** (ou « Installer l'appli ») :
+   le jeu se lance alors en plein écran paysage, comme une vraie app.
+
+Contrôles tactiles : touchez une carte de tour, puis une case libre — un
+premier tap affiche l'aperçu (portée comprise), un second tap confirme.
+Touchez une tour posée pour l'améliorer, la vendre ou la combiner.
+
+Pour jouer **hors de chez vous** (amis à distance), déployez le serveur sur
+un hébergeur Node.js (Render, Railway, Fly.io, VPS…) et partagez l'URL —
+la PWA s'installe alors depuis n'importe où en HTTPS.
+
+### APK natif (optionnel, via Capacitor)
+
+Si vous voulez un vrai APK à installer/distribuer, enveloppez l'URL de
+votre serveur déployé avec [Capacitor](https://capacitorjs.com) :
+
+```bash
+npm install @capacitor/core @capacitor/cli @capacitor/android
+npx cap init "TD Wars" ch.kapt.tdwars --web-dir public
+# dans capacitor.config.json, pointez l'app vers votre serveur :
+#   "server": { "url": "https://votre-serveur.example.com" }
+npx cap add android
+npx cap open android   # puis Build > Build APK dans Android Studio
+```
+
+L'APK n'est qu'une coquille WebView : le multijoueur passe toujours par
+votre serveur, tous les joueurs (web, PWA, APK) jouent ensemble.
+
 ## Principes du jeu
 
 - **Vagues** : une vague de monstres toutes les 25 s (30 vagues, boss toutes

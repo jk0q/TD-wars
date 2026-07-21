@@ -3,6 +3,7 @@
 // ============================================================
 import express from 'express';
 import http from 'http';
+import os from 'os';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { Server } from 'socket.io';
@@ -122,4 +123,10 @@ function leaveRoom(socket) {
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`⚔️  TD Wars — serveur lancé sur http://localhost:${PORT}`);
+  const lanIps = Object.values(os.networkInterfaces()).flat()
+    .filter(i => i && i.family === 'IPv4' && !i.internal)
+    .map(i => i.address);
+  for (const ip of lanIps) {
+    console.log(`📱 Depuis un téléphone sur le même réseau : http://${ip}:${PORT}`);
+  }
 });
