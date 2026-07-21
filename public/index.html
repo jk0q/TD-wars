@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TD Wars — Tower Defense Wars multijoueur</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚔️</text></svg>">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ===================== LOBBY ===================== -->
+  <div id="lobby" class="overlay">
+    <div class="panel-box">
+      <h1>⚔️ TD Wars</h1>
+      <p class="subtitle">Tower Defense Wars multijoueur — défendez votre couloir,<br>
+        envoyez des monstres chez vos adversaires, boostez votre income !</p>
+
+      <div id="lobby-home">
+        <label>Votre pseudo
+          <input id="name-input" type="text" maxlength="16" placeholder="Pseudo" autocomplete="off">
+        </label>
+        <div class="row">
+          <button id="create-btn" class="btn primary">Créer un salon</button>
+        </div>
+        <div class="row">
+          <input id="code-input" type="text" maxlength="4" placeholder="CODE" autocomplete="off">
+          <button id="join-btn" class="btn">Rejoindre</button>
+        </div>
+      </div>
+
+      <div id="lobby-room" class="hidden">
+        <p>Code du salon : <span id="room-code" class="room-code"></span></p>
+        <p class="hint">Partagez ce code avec vos adversaires (2 à 4 joueurs).<br>
+          Vous pouvez aussi lancer en solo pour vous entraîner.</p>
+        <ul id="room-players"></ul>
+        <div class="row">
+          <button id="start-btn" class="btn primary hidden">Lancer la partie</button>
+          <button id="leave-btn" class="btn">Quitter</button>
+        </div>
+        <p id="wait-host" class="hint hidden">En attente du lancement par l'hôte…</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== JEU ===================== -->
+  <div id="game" class="hidden">
+    <div id="topbar"></div>
+    <div id="main">
+      <div id="board-wrap">
+        <div id="view-banner" class="hidden"></div>
+        <canvas id="board" width="640" height="480"></canvas>
+        <div id="wave-banner"></div>
+      </div>
+      <div id="sidebar">
+        <div id="resources">
+          <span class="res" title="Or">💰 <b id="res-gold">0</b></span>
+          <span class="res" title="Income (or reçu périodiquement)">📈 <b id="res-income">0</b></span>
+          <span class="res" title="Vies">❤️ <b id="res-lives">0</b></span>
+        </div>
+        <div id="timers">
+          <span>🌊 Vague <b id="wave-num">0</b> — prochaine dans <b id="wave-timer">–</b>s</span><br>
+          <span>💵 Income dans <b id="income-timer">–</b>s</span>
+        </div>
+        <div id="tabs">
+          <button class="tab active" data-tab="build">🏗️ Construire</button>
+          <button class="tab" data-tab="research">📖 Recherche</button>
+          <button class="tab" data-tab="send">👹 Envoyer</button>
+        </div>
+        <div id="tab-content"></div>
+        <div id="selection" class="hidden"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== FIN DE PARTIE ===================== -->
+  <div id="gameover" class="overlay hidden">
+    <div class="panel-box">
+      <h1 id="go-title"></h1>
+      <p id="go-detail"></p>
+      <button id="go-back" class="btn primary">Retour au lobby</button>
+    </div>
+  </div>
+
+  <div id="toasts"></div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

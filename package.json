@@ -1,0 +1,17 @@
+{
+  "name": "td-wars",
+  "version": "0.1.0",
+  "description": "Tower Defense Wars multijoueur — inspiré des TD wars de Warcraft 3 et de Legion TD",
+  "type": "module",
+  "scripts": {
+    "start": "node server/index.js",
+    "test": "node test/smoke.mjs"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "socket.io": "^4.7.5"
+  },
+  "devDependencies": {
+    "socket.io-client": "^4.7.5"
+  }
+}
