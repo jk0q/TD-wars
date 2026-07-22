@@ -96,6 +96,40 @@ try {
   if (c1 && c2 && c1.x === c2.x && c1.y === c2.y) fail('les creeps ne bougent pas');
   ok('Simulation active, creeps en mouvement');
 
+  // Sécurité : des payloads avec clés de prototype ne doivent NI crasher le
+  // serveur, NI contourner les gardes de validation (régression du bug où
+  // RESEARCH['__proto__'] renvoyait Object.prototype et faisait planter tout
+  // le serveur, où build/sendUnit corrompaient l'or/income à NaN).
+  const goldBefore = meP().gold;
+  const incomeBefore2 = meP().income;
+  for (const key of ['__proto__', 'constructor', 'toString', 'hasOwnProperty']) {
+    alice.emit('research', { branch: key });
+    alice.emit('build', { x: 6, y: 6, type: key });
+    alice.emit('sendUnit', { unit: key, count: 1 });
+  }
+  alice.emit('build', { x: 6, y: 6, type: 'vapeur' }); // tour combo directe : interdite
+  await sleep(600);
+  // le serveur répond encore (preuve qu'il n'a pas planté) — via une
+  // connexion neuve, car alice/bob sont déjà dans un salon
+  const probe = await connect();
+  const stillAlive = await new Promise((res) => {
+    const t = setTimeout(() => res(false), 1500);
+    probe.emit('createRoom', { name: 'Probe' }, (r) => { clearTimeout(t); res(!!r?.ok); });
+  });
+  probe.disconnect();
+  if (!stillAlive) fail('le serveur ne répond plus après des payloads de prototype (crash ?)');
+  const meNow = meP();
+  if (!Number.isFinite(meNow.gold) || meNow.gold !== goldBefore) {
+    fail(`l'or a été corrompu par des payloads de prototype : ${meNow.gold} (attendu ${goldBefore})`);
+  }
+  if (!Number.isFinite(meNow.income) || meNow.income !== incomeBefore2) {
+    fail(`l'income a été corrompu par des payloads de prototype : ${meNow.income} (attendu ${incomeBefore2})`);
+  }
+  if (meNow.towers.some(t => t.x === 6 && t.y === 6)) {
+    fail('un payload de prototype a réussi à construire une tour');
+  }
+  ok('Payloads de prototype rejetés sans crash ni corruption (or/income/tours intacts)');
+
   // Déconnexion de Bob -> Alice gagne
   const over = new Promise(r => alice.on('gameOver', r));
   bob.disconnect();

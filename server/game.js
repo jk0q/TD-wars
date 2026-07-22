@@ -54,6 +54,11 @@ function isMaxed(tower) {
   return TOWERS[tower.type].tier === 'combo' || tower.lvl >= 3;
 }
 
+// Recherche sûre dans un dictionnaire de données : n'accepte QUE les clés
+// réellement définies (évite que '__proto__', 'constructor', 'toString'… ne
+// renvoient une valeur héritée truthy qui contournerait les gardes if(!def)).
+const has = (obj, key) => typeof key === 'string' && Object.hasOwn(obj, key);
+
 let nextId = 1;
 const uid = () => nextId++;
 
@@ -272,8 +277,9 @@ export class Game {
   err(socket, msg) { socket.emit('toast', { type: 'error', msg }); }
 
   canBuild(p, type) {
+    if (!has(TOWERS, type)) return false;
     const def = TOWERS[type];
-    if (!def || def.tier === 'combo') return false;
+    if (def.tier === 'combo') return false;
     if (def.req && p.research[def.req.branch] < def.req.lvl) return false;
     return true;
   }
@@ -326,8 +332,8 @@ export class Game {
   research(socket, pid, { branch }) {
     const p = this.players.get(pid);
     if (!p || !p.alive || this.over) return;
+    if (!has(RESEARCH, branch)) return;
     const r = RESEARCH[branch];
-    if (!r) return;
     const cur = p.research[branch];
     if (cur >= 3) return this.err(socket, 'Recherche au maximum');
     const cost = r.costs[cur];
@@ -363,8 +369,8 @@ export class Game {
   sendUnit(socket, pid, { unit, count }) {
     const p = this.players.get(pid);
     if (!p || !p.alive || this.over) return;
+    if (!has(UNITS, unit)) return;
     const def = UNITS[unit];
-    if (!def) return;
     count = Math.max(1, Math.min(10, count | 0 || 1));
     const totalCost = def.cost * count;
     if (p.gold < totalCost) return this.err(socket, 'Or insuffisant');

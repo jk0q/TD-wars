@@ -87,10 +87,16 @@ io.on('connection', (socket) => {
   });
 
   // --- Actions en jeu ---
+  // Un payload malformé ne doit jamais faire tomber le serveur : on isole
+  // chaque action dans un try/catch (défense en profondeur).
   const gameAction = (handler) => (payload) => {
     const room = rooms.get(socket.data.room);
     if (!room?.game) return;
-    handler(room.game, payload || {});
+    try {
+      handler(room.game, (payload && typeof payload === 'object') ? payload : {});
+    } catch (e) {
+      console.error('action error', e);
+    }
   };
   socket.on('build', gameAction((g, p) => g.build(socket, socket.id, p)));
   socket.on('upgrade', gameAction((g, p) => g.upgrade(socket, socket.id, p)));
