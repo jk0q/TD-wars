@@ -14,6 +14,12 @@ propre dossier WinBiz, son plan comptable, sa banque et son dossier NAS.
 _Éviter_ : client, dossier, société — trop ambigus, « client » désignant aussi
 les clients du mandat.
 
+**Clé de mandat** :
+Donnée exacte qui rattache une pièce à son mandat : l'IBAN pour un export
+bancaire, le sous-dossier de dépôt pour une facture. Jamais une déduction faite
+sur le contenu du document.
+_Éviter_ : identifiant client, mapping.
+
 **Pièce** :
 Un document justificatif reçu : relevé bancaire, facture fournisseur, ticket.
 _Éviter_ : document, justificatif, fichier.
@@ -83,6 +89,23 @@ référence QR. Distinct de l'imputation : le rapprochement identifie *qui* a
 payé, l'imputation décide *quel compte* mouvementer.
 _Éviter_ : lettrage, matching.
 
+### Circulation des pièces
+
+**Zone de dépôt** :
+Emplacement OneDrive où le comptable dépose les pièces à traiter. Point
+d'entrée du flux, jamais un lieu de conservation.
+_Éviter_ : boîte de réception, dossier d entrée.
+
+**Quarantaine** :
+Emplacement où une pièce renommée attend la confirmation de son import dans
+WinBiz. Ce qui s'y trouve est exactement ce qui reste à traiter.
+_Éviter_ : dossier temporaire, staging.
+
+**Archive** :
+Dossier NAS définitif d'un mandat. Une pièce n'y entre qu'après un import
+confirmé, et son chemin est alors figé : il part en dur dans la base WinBiz.
+_Éviter_ : dossier client, stockage final.
+
 ### Contrôles
 
 **Invariante** :
@@ -94,3 +117,9 @@ _Éviter_ : contrôle, validation, check.
 Violation d'une invariante. Interdit la production d'un fichier d'import : un
 fichier silencieusement faux est pire qu'une conversion qui échoue.
 _Éviter_ : erreur, warning.
+
+**Avertissement** :
+Constat inhabituel qui n'invalide pas la conversion : une pagination
+incomplète, un libellé tronqué, un caractère translittéré. Figure au rapport
+sans bloquer la production du fichier d'import.
+_Éviter_ : alerte, note.
