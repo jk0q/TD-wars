@@ -51,6 +51,26 @@ fait cet essai.**
 
 ---
 
+## Le plus simple : les deux lanceurs
+
+Si la ligne de commande pose problème, tout le dossier fonctionne au
+double-clic. Deux fichiers `.bat` sont fournis :
+
+| Fichier | Ce qu'il fait |
+|---|---|
+| `1-DIAGNOSTIC.bat` | Glisse un CSV dessus, ou double-clique : il analyse tous les CSV du dossier |
+| `2-CONVERTIR.bat` | Glisse l'export UBS dessus : il demande les comptes, puis convertit |
+
+La fenêtre reste ouverte à la fin — le résultat se lit tranquillement.
+Si Python manque, le lanceur le dit et explique quoi faire.
+
+**Ouvrir un terminal dans le bon dossier**, si tu en as besoin quand même :
+ouvre `cmd`, tape `cd ` suivi d'un espace, puis **glisse le dossier** depuis
+l'explorateur dans la fenêtre noire, et Entrée. Cette méthode marche partout,
+même quand `cmd` dans la barre d'adresse est bloqué.
+
+---
+
 ## Sur place
 
 ### Étape 1 — Identifier ce qu'on te donne
