@@ -1,0 +1,38 @@
+{
+  "banque": "postfinance",
+  "nom": "PostFinance",
+  "clearing": "09000",
+  "statut": "a_completer",
+  "mesure_sur": null,
+
+  "_a_faire": [
+    "Ce format n'a jamais ete mesure. Ne rien ecrire avec, ne rien deviner.",
+    "",
+    "Il faut UN fichier : un export CSV reel du compte PostFinance, celui qui passe",
+    "deja l'import du logiciel comptable sans erreur.",
+    "",
+    "Ensuite : python savacom/diagnostic.py \"l'export.csv\"",
+    "Le diagnostic donne l'encodage, la fin de ligne, le separateur, le nombre",
+    "de lignes de metadonnees, le nombre de colonnes et le format de chacune.",
+    "Reporter le tout ici en suivant _MODELE.json, puis passer statut a 'mesure'.",
+    "",
+    "Tant que statut vaut 'a_completer', la skill doit le dire a l'utilisateur",
+    "et reclamer l'export, pas produire un CSV."
+  ],
+
+  "encodage": null,
+  "fin_de_ligne": null,
+  "separateur": null,
+  "guillemets": null,
+  "lignes_avant_entete": null,
+  "entete": null,
+  "ecrire_entete": null,
+  "colonnes": null,
+  "format_date": null,
+  "format_montant": null,
+  "montant_en_une_colonne": null,
+  "ordre": null,
+  "nom_fichier": null,
+  "reconnaissance": null,
+  "notes": []
+}

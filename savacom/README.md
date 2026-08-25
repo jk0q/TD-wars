@@ -1,8 +1,11 @@
-# Savacom — automatisation des flux comptables
+# Savacom — relevés bancaires vers CSV
 
-Chaîne qui va des relevés bancaires reçus par Savacom Sàrl (fiduciaire, Cernier)
-jusqu'aux écritures importées dans WinBiz et aux justificatifs archivés sur le
-NAS. Remplace Multigest, qui quitte le marché suisse.
+Savacom Sàrl (fiduciaire, Cernier) reçoit les relevés de ses mandats en PDF,
+parfois en photo. Son logiciel comptable, **AE Pro Easy**, n'avale que le CSV
+que la banque produit. Le travail consiste à faire le pont : lire le document
+et le réécrire exactement comme la banque l'aurait exporté.
+
+Quatre banques : **BCN, UBS, PostFinance, BCF**.
 
 **Aucune donnée client dans ce dépôt.** Relevés, exports bancaires et
 justificatifs restent chez le client. Voir `.gitignore`.
@@ -13,12 +16,28 @@ justificatifs restent chez le client. Voir `.gitignore`.
 
 | Vous voulez… | Lisez |
 |---|---|
+| **Le livrable** | [`skills/releve-bancaire-vers-csv/`](./skills/releve-bancaire-vers-csv/SKILL.md) |
 | Comprendre le vocabulaire du projet | [`CONTEXT.md`](./CONTEXT.md) |
 | Savoir pourquoi c'est fait ainsi | [`docs/adr/`](./docs/adr/) — 15 décisions |
-| Intervenir chez le client | [`PROTOCOLE-INTERVENTION.md`](./PROTOCOLE-INTERVENTION.md) |
-| **Les commandes exactes, sur place** | [`COMMANDES.md`](./COMMANDES.md) |
 | Identifier un fichier inconnu | `python diagnostic.py "fichier.csv"` |
-| Convertir un export UBS | `python ubs_vers_winbiz.py --help` |
+
+### Ce qui a changé
+
+Le projet visait d'abord à produire des fichiers d'import **WinBiz** à partir
+d'exports bancaires CSV. Les captures de l'écran d'AE Pro Easy ont montré que
+ce logiciel fait déjà ce travail : il connaît le compte comptable de chaque
+mandat, numérote les pièces, gère le compte d'attente et fabrique les écritures.
+
+Le besoin réel est en amont : **partir d'un PDF ou d'une photo**, là où AE Pro
+Easy n'a rien à se mettre sous la dent.
+
+`ubs_vers_winbiz.py`, `PROTOCOLE-INTERVENTION.md`, `COMMANDES.md` et les
+lanceurs `.bat` appartiennent à cette première direction. Ils restent dans le
+dépôt — la connaissance des formats qu'ils contiennent alimente directement les
+fichiers de format de la skill — mais ils ne sont plus le livrable.
+
+`diagnostic.py`, lui, sert plus que jamais : c'est l'outil qui mesure un export
+bancaire réel pour en déduire le format à imiter.
 
 Trois termes suffisent à ne pas se perdre : un **mandat** est une société dont
 Savacom tient les comptes ; un **export bancaire** vient de la banque ; un
@@ -29,17 +48,24 @@ les documents d'origine, et ce sont trois choses différentes.
 
 ## État
 
-**Fait.** Convertisseur UBS validé sur 770 transactions réelles : 760 écritures
-produites, chaîne des soldes intacte, total reconstituant le solde final au
-centime.
+**Fait.** La skill : méthode de lecture, contrôles arithmétiques, écriture
+byte-exacte. Le vérificateur attrape les quatre modes d'échec d'une lecture de
+scan — chiffre mal lu, ligne sautée, page manquante, lecture douteuse — et
+refuse d'écrire un CSV tant qu'un seul contrôle échoue.
 
-**Décidé, non construit.** Registre anti-doublons (ADR 0011), quarantaine
-(ADR 0005), table des mandats (ADR 0009), journal cumulatif (ADR 0014),
-raccourci de lancement (ADR 0013).
+**Bloqué sur un fichier.** Les formats **BCN, PostFinance et BCF** n'ont jamais
+été mesurés. Il faut, par banque, **un export CSV réel qui passe déjà l'import
+d'AE Pro Easy** : c'est la spécification, et rien ne la remplace. Deviner des
+colonnes produirait un fichier rejeté à l'import.
 
-**Ouvert — se tranche sur place.** Format exact d'import WinBiz ; place de la
-référence QR ; CAMT natif ou conversion CSV (ADR 0007) ; forme et profondeur du
-chemin d'archive.
+**Partiel.** UBS : encodage, fin de ligne, séparateur, nombre de colonnes et
+format des montants sont mesurés ; les noms de colonnes verbatim et les lignes
+de métadonnées restent à relever sur le fichier réel.
+
+**À tester, sans code.** AE Pro Easy répond « le fichier semble être un extrait
+Raiffeisen » quand on lui donne l'export UBS `11_Konto_*.csv` — qui a exactement
+la forme d'un export Raiffeisen. Charger `transactions(13).csv` à la place
+pourrait suffire à débloquer UBS.
 
 **Hors périmètre.** Factures fournisseurs (ADR 0002), rapprochement automatique
 des encaissements (ADR 0003), agent WhatsApp.

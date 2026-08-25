@@ -1,0 +1,69 @@
+{
+  "banque": "ubs",
+  "nom": "UBS",
+  "clearing": "00204",
+  "statut": "partiel",
+  "mesure_sur": "transactions(13).csv, export e-banking UBS, 901 lignes, aout 2026",
+
+  "encodage": "utf-8-sig",
+  "fin_de_ligne": "LF",
+  "separateur": ";",
+  "guillemets": "si_necessaire",
+
+  "lignes_avant_entete": [],
+  "_lignes_avant_entete_note": "MESURE : 9 lignes de metadonnees precedent l'entete (8 lignes + 1 vide). Leur contenu verbatim n'a pas ete releve. A copier depuis le fichier reel avant de passer statut a 'mesure'.",
+
+  "entete": [],
+  "_entete_note": [
+    "MESURE : 15 colonnes. La premiere s'appelle exactement 'Date de transaction'.",
+    "Les treize premieres portent, dans cet ordre et sous toute reserve :",
+    "Date de transaction, Heure, Date de comptabilisation, Date de valeur,",
+    "Devise, Debit, Credit, Sous-montant, Solde, No de transaction,",
+    "Description1, Description2, Description3.",
+    "Les colonnes 14 et 15 sont inconnues.",
+    "Ces noms viennent du code de conversion ecrit contre ce fichier, pas d'un",
+    "releve verbatim de l'entete. A confirmer caractere par caractere."
+  ],
+  "ecrire_entete": true,
+
+  "colonnes": {},
+  "_colonnes_note": "A remplir une fois l'entete confirmee.",
+
+  "format_date": "%Y-%m-%d",
+  "format_montant": {
+    "decimales": 2,
+    "separateur_decimal": ".",
+    "separateur_milliers": "aucun",
+    "debit_negatif": true
+  },
+  "montant_en_une_colonne": false,
+
+  "ordre": "anti_chronologique",
+  "_ordre_note": "MESURE : le solde de chaque ligne egale le solde de la suivante plus son montant. La ligne la plus recente est en tete. 0 rupture sur 769 transitions.",
+
+  "nom_fichier": "transactions({n}).csv",
+
+  "reconnaissance": [
+    "NON MESURE pour ce format.",
+    "OBSERVE en revanche sur l'AUTRE export UBS, celui nomme 11_Konto_*.csv :",
+    "le logiciel comptable repond « Le fichier semble etre un extrait Raiffeisen,",
+    "mais la banque selectionnee est UBS ». Ce fichier-la a 6 colonnes, du",
+    "Windows-1252 et du CRLF — soit exactement la forme d'un export Raiffeisen.",
+    "Hypothese a tester : le logiciel reconnait la banque a la forme du fichier,",
+    "et le 11_Konto est donc inutilisable comme source UBS."
+  ],
+
+  "notes": [
+    "1754 champs contiennent le separateur ';'. La banque les echappe entre",
+    "guillemets selon la RFC 4180. Un importateur qui decoupe naivement sur ';'",
+    "cassera dessus.",
+    "121 lignes n'ont pas de date en premiere colonne : ce sont des sous-lignes",
+    "qui decomposent un versement collectif. Leur somme egale le montant de la",
+    "ligne mere — verifie 102 fois sur 102. Les compter comme des transactions",
+    "produirait un double comptage.",
+    "Les sous-lignes portent les references QR (QRR:...) du payeur.",
+    "Certaines lignes sont a 0.00.",
+    "UBS reutilise parfois un meme numero de transaction pour un virement et",
+    "ses « Frais de tiers »."
+  ]
+}

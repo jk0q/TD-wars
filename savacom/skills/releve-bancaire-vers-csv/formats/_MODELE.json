@@ -1,0 +1,73 @@
+{
+  "_lisez_moi": [
+    "Gabarit d'un fichier de format. Un fichier par banque.",
+    "",
+    "Tout ce qui est ici se MESURE sur un vrai export CSV de la banque, celui",
+    "qui passe deja l'import du logiciel comptable. Rien ne se devine : un CSV",
+    "au format suppose sera refuse a l'import, et l'utilisateur perdra plus de",
+    "temps a comprendre pourquoi qu'il n'en aurait passe a fournir le fichier.",
+    "",
+    "Pour mesurer : lancer savacom/diagnostic.py sur l'export reel. Il donne",
+    "l'encodage, la fin de ligne, le separateur, le nombre de lignes de",
+    "metadonnees, le nombre de colonnes et le format de chaque colonne.",
+    "",
+    "Mettre statut = 'mesure' seulement quand chaque champ vient d'une",
+    "observation, jamais d'une deduction."
+  ],
+  "banque": "code court en minuscules, ex. bcn",
+  "nom": "nom complet affiche a l'utilisateur",
+  "clearing": "les 5 chiffres du clearing, positions 5 a 9 de l'IBAN",
+  "statut": "a_completer",
+  "mesure_sur": "nom du fichier reel qui a servi de reference, et sa date",
+  "encodage": "utf-8-sig | utf-8 | cp1252",
+  "fin_de_ligne": "CRLF | LF",
+  "separateur": ";",
+  "guillemets": "jamais | si_necessaire — comment la banque echappe un champ contenant le separateur",
+  "lignes_avant_entete": [
+    [
+      "Chaque ligne de metadonnee est une LISTE DE CELLULES, pas du texte."
+    ],
+    [
+      "Exemple pour 'IBAN:;CH17...' :",
+      "[\"IBAN:\", \"{iban}\"]"
+    ],
+    [
+      "Les accolades sont remplacees par les champs du releve (iban, titulaire...)."
+    ],
+    [
+      "Laisser [] si la table commence a la premiere ligne."
+    ]
+  ],
+  "entete": [
+    "Les noms de colonnes VERBATIM, dans l'ordre exact du fichier reel.",
+    "Copier-coller depuis le fichier, ne pas retaper : les accents, les",
+    "abreviations et les espaces comptent."
+  ],
+  "ecrire_entete": true,
+  "colonnes": [
+    "Une liste PARALLELE a 'entete' : une entree par colonne, dans l'ordre.",
+    "Valeurs admises : date, date_valeur, libelle, debit, credit, solde,",
+    "montant (colonne signee unique), vide, ou constante:XXX.",
+    "Exemple : [\"date\", \"libelle\", \"debit\", \"credit\", \"solde\"]"
+  ],
+  "format_date": "%d.%m.%Y | %Y-%m-%d | %d/%m/%y — tel qu'il apparait dans l'export",
+  "format_montant": {
+    "decimales": 2,
+    "separateur_decimal": ". | ,",
+    "separateur_milliers": "aucun | ' | espace",
+    "debit_negatif": "true si les debits portent un signe moins dans une colonne unique"
+  },
+  "montant_en_une_colonne": "true = une colonne signee ; false = deux colonnes debit et credit",
+  "ordre": "chronologique | anti_chronologique",
+  "nom_fichier": "gabarit du nom de fichier, ex. '{iban}_{date}.csv' — certaines banques nomment de facon reconnaissable, et le logiciel peut s'en servir",
+  "reconnaissance": [
+    "Ce sur quoi le logiciel comptable semble reconnaitre la banque.",
+    "Se decouvre a l'usage : on lui donne un fichier, on lit son message.",
+    "Noter ici ce qui a ete observe, pas ce qui est suppose."
+  ],
+  "notes": [
+    "Tout ce qui a surpris pendant la mesure : sous-lignes, versements",
+    "collectifs, champs contenant le separateur, lignes a zero, doublons",
+    "de reference. C'est ce qui fera echouer un import six mois plus tard."
+  ]
+}
