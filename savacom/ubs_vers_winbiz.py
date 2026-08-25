@@ -38,6 +38,16 @@ ENCODAGES_ESSAYES = [("utf-8", "UTF-8 sans BOM"),
                      ("cp1252", "Windows-1252 (ANSI)"),
                      ("latin-1", "ISO 8859-1")]
 SEPARATEUR = ";"
+
+# Volontairement recopie depuis diagnostic.py : les deux scripts doivent pouvoir
+# etre copies seuls sur une cle USB, sans module commun a ne pas oublier.
+SIGNATURES = [
+    (b"%PDF-", "un PDF"),
+    (b"PK\x03\x04", "une archive ZIP (xlsx, docx ?)"),
+    (b"\xd0\xcf\x11\xe0", "un document Office ancien (xls, doc)"),
+    (b"\x89PNG", "une image PNG"),
+    (b"\xff\xd8\xff", "une image JPEG"),
+]
 COL_ENTETE = "Date de transaction"  # marque le début de la table
 
 # Index des colonnes de l'export UBS (15 colonnes, la dernière vide)
@@ -81,6 +91,7 @@ class Ecriture:
     sens: str                       # "debit_banque" (encaissement) | "credit_banque"
     references: list[str] = field(default_factory=list)
     remarques: list[str] = field(default_factory=list)
+    separateur_retire: bool = False  # le libelle source contenait un « ; »
 
     @property
     def a_imputer(self) -> bool:
@@ -102,10 +113,13 @@ def decoder(chemin: Path) -> tuple[str, str]:
     except OSError as e:
         raise ErreurDeFormat(f"Impossible de lire {chemin} : {e}")
 
-    if b"\x00" in brut[:4096]:
+    nature = next((n for magie, n in SIGNATURES if brut.startswith(magie)), "")
+    if not nature and b"\x00" in brut[:4096]:
+        nature = "un fichier binaire"
+    if nature:
         raise ErreurDeFormat(
-            f"{chemin.name} est un fichier binaire (PDF, image, tableur ?), "
-            "pas un export texte. Attendu : le CSV telecharge depuis l'e-banking UBS."
+            f"{chemin.name} est {nature}, pas un export texte. "
+            "Attendu : le CSV telecharge depuis l'e-banking UBS."
         )
 
     if brut.startswith(BOM_UTF8):
@@ -307,7 +321,8 @@ def construire_ecritures(groupes, longueur_libelle: int,
         desc2 = mere[C_DESC2].strip()
         if desc2 and not desc2.startswith(("20326812", "FILETRANSFER")):
             parties.append(desc2)
-        libelle, remarque = assainir(" ".join(p for p in parties if p), longueur_libelle)
+        libelle_source = " ".join(p for p in parties if p)
+        libelle, remarque = assainir(libelle_source, longueur_libelle)
         remarques = [remarque] if remarque else []
 
         # Tronquer par la FIN, pas par le début : sur cet export les numéros
@@ -338,6 +353,7 @@ def construire_ecritures(groupes, longueur_libelle: int,
             date=date, piece=piece, libelle=libelle, montant=abs(montant),
             sens="debit_banque" if credit else "credit_banque",
             references=references, remarques=remarques,
+            separateur_retire=SEPARATEUR in libelle_source,
         ))
     return ecritures, zero
 
@@ -444,8 +460,9 @@ def ecrire_rapport(chemin, source, meta, encodage, ecritures, anomalies_solde,
         lignes += [
             "!" * 70,
             "!  AUCUNE ECRITURE PRODUITE.",
-            "!  Le fichier de sortie est vide. Verifiez le filtre de dates,",
-            "!  la limite, ou le contenu du fichier source.",
+            "!  Aucun fichier d'import n'a ete ecrit, pour ne pas effacer une",
+            "!  conversion precedente. Verifiez le filtre de dates, la limite,",
+            "!  ou le contenu du fichier source.",
             "!" * 70,
             "",
         ]
@@ -457,6 +474,8 @@ def ecrire_rapport(chemin, source, meta, encodage, ecritures, anomalies_solde,
         f"  Ecritures produites                : {len(ecritures)}",
         f"  Lignes a 0.00 ecartees             : {zero}",
         f"  Versements collectifs regroupes    : {sum(1 for _, s in groupes if s)}",
+        f"  Libelles dont le « ; » est retire  : "
+        f"{sum(1 for e in ecritures if e.separateur_retire)}",
         f"  Chaine des soldes                  : {etat(anomalies_solde, applicable)}",
         f"  Coherence des sous-montants        : {etat(anomalies_sous, applicable)}",
         "",
@@ -531,7 +550,9 @@ def ecrire_rapport(chemin, source, meta, encodage, ecritures, anomalies_solde,
                     lignes.append(f"      {e.date} {e.piece}")
         lignes.append("")
 
-    Path(chemin).write_text("\n".join(lignes) + "\n", encoding="utf-8")
+    # BOM volontaire : ce rapport n'est lu que par un humain, souvent dans le
+    # Bloc-notes de Windows. Le BOM garantit l'affichage correct des accents.
+    Path(chemin).write_text("\n".join(lignes) + "\n", encoding="utf-8-sig")
 
 
 # ---------------------------------------------------------------------------
@@ -627,15 +648,22 @@ def main() -> int:
         sortie = args.source.with_name(args.source.stem + marque + "_winbiz.csv")
     rapport = sortie.with_name(sortie.stem + "_rapport.txt")
 
-    ecrire_winbiz(lignes, sortie, args.entete)
+    # Un resultat vide n'ecrit PAS le fichier d'import : il porterait le nom de
+    # production et effacerait une conversion valide faite juste avant. Le
+    # rapport, lui, est ecrit — c'est lui qui explique pourquoi c'est vide.
+    if ecritures:
+        ecrire_winbiz(lignes, sortie, args.entete)
     ecrire_rapport(rapport, args.source, meta, encodage, ecritures, anomalies_solde,
                    anomalies_sous, groupes, zero, remarques_piece, args.limite)
 
-    print(f"{len(ecritures)} ecritures -> {sortie}")
+    if ecritures:
+        print(f"{len(ecritures)} ecritures -> {sortie}")
     print(f"rapport -> {rapport}")
 
     if not ecritures:
-        print("ATTENTION : aucune ecriture produite, le fichier est vide.",
+        print("ATTENTION : aucune ecriture produite. Aucun fichier d'import n'a\n"
+              "  ete ecrit, pour ne pas effacer une conversion precedente.\n"
+              "  Verifiez le filtre de dates, la limite, ou le fichier source.",
               file=sys.stderr)
         return 1
     if anomalies_solde or anomalies_sous:

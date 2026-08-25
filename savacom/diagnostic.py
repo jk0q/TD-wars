@@ -25,6 +25,26 @@ BOM_UTF8 = b"\xef\xbb\xbf"
 SEPARATEURS = [";", ",", "\t", "|"]
 NOM_SEPARATEUR = {";": "point-virgule", ",": "virgule", "\t": "tabulation", "|": "barre"}
 
+# Les premiers octets suffisent a nommer les formats qu'on vous tendra le plus
+# souvent en croyant donner un CSV. Le NUL sert de filet pour tout le reste.
+SIGNATURES = [
+    (b"%PDF-", "PDF"),
+    (b"PK\x03\x04", "archive ZIP (xlsx, docx, odt ?)"),
+    (b"\xd0\xcf\x11\xe0", "document Office ancien (xls, doc)"),
+    (b"\x89PNG", "image PNG"),
+    (b"\xff\xd8\xff", "image JPEG"),
+]
+
+
+def detecter_binaire(brut: bytes) -> str:
+    """Nomme le format binaire reconnu, ou renvoie '' si le fichier est du texte."""
+    for magie, nom in SIGNATURES:
+        if brut.startswith(magie):
+            return nom
+    if b"\x00" in brut[:4096]:
+        return "fichier binaire (format non reconnu)"
+    return ""
+
 
 def detecter_encodage(brut: bytes) -> tuple[str, str, str]:
     """Renvoie (encodage pour lire, nom affiché, remarque).
@@ -139,19 +159,20 @@ def diagnostiquer(chemin: Path) -> None:
     print("=" * 74)
     print(f"  taille           : {len(brut):,} octets".replace(",", "'"))
 
+    if not brut:
+        print("  NATURE           : fichier vide, rien a analyser.")
+        return
+
+    binaire = detecter_binaire(brut)
+    if binaire:
+        print(f"  NATURE           : {binaire}")
+        print("                     ce n'est pas un fichier texte : analyse interrompue.")
+        print("                     rien n'a ete lu, donc aucun encodage n'est annonce.")
+        return
+
     enc, nom, note = detecter_encodage(brut)
     print(f"  encodage         : {nom}")
     print(f"                     {note}")
-
-    if b"\x00" in brut[:4096]:
-        print("  NATURE           : fichier BINAIRE (PDF, image, tableur ?)")
-        print("                     pas un fichier texte, analyse interrompue.")
-        return
-
-    if not brut:
-        print("  lignes           : 0")
-        print("  NATURE           : fichier vide, rien a analyser.")
-        return
 
     crlf = brut.count(b"\r\n")
     lf = brut.count(b"\n") - crlf

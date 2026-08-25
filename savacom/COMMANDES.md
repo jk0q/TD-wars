@@ -93,13 +93,23 @@ python diagnostic.py *.csv
 
 **Ce que tu regardes en priorité :**
 
+Les libellés ci-dessous sont exactement ceux qui s'affichent à l'écran.
+
 | Ligne affichée | Ce que ça veut dire |
 |---|---|
-| `encodage : utf-8-sig` | WinBiz voudra du cp1252 — conversion nécessaire |
-| `encodage : cp1252` | déjà au bon format |
-| `fin de ligne : LF` | WinBiz veut du CRLF |
-| `PIEGE : n champs contiennent le separateur` | c'est probablement la cause de l'échec |
-| `A VERIFIER : n lignes sans valeur en 1re colonne` | des sous-lignes — risque de double comptage |
+| `NATURE : PDF` (ou ZIP, image…) | ce n'est pas un CSV — demande le bon fichier |
+| `encodage : UTF-8 avec BOM` | WinBiz voudra de l'ANSI 1252 — conversion nécessaire |
+| `encodage : UTF-8 sans BOM` | idem, conversion nécessaire |
+| `encodage : Windows-1252 (ANSI)` | déjà au bon format |
+| `encodage : ASCII` | aucun accent, passe partout |
+| `fin de ligne : LF (Unix)` | WinBiz veut du CRLF |
+| `fin de ligne : CRLF (Windows)` | déjà au bon format |
+| `PIEGE : n champ(s) contiennent le separateur` | c'est probablement la cause de l'échec |
+| `A VERIFIER : n ligne(s) sans valeur en 1re colonne` | des sous-lignes — risque de double comptage |
+| `IRREGULIER : {...}` | le nombre de colonnes varie d'une ligne à l'autre |
+
+Quand la ligne `NATURE` apparaît, l'analyse s'arrête là : aucun encodage n'est
+annoncé, parce que rien n'a été lu. C'est voulu.
 
 ### Étape 2 — Le fichier de test à dix lignes
 
@@ -132,11 +142,15 @@ cat transactions_rapport.txt         # Mac / Linux
 Trois lignes décident si tu importes ou non :
 
 ```
-Chaine des soldes              : OK
-Sous-montants et num. de piece : OK
+Chaine des soldes                  : OK
+Coherence des sous-montants        : OK
 ```
 
 et pas de section `ANOMALIES BLOQUANTES`.
+
+Le bloc `CONTROLES` dit aussi combien de libellés ont été nettoyés de leur
+« ; » et combien de versements collectifs ont été regroupés : ce sont les deux
+transformations qui changent le contenu, elles doivent être visibles.
 
 **Si l'une de ces lignes n'est pas propre : n'importe pas.** Comprends d'abord.
 
@@ -182,6 +196,15 @@ python ubs_vers_winbiz.py "transactions.csv" --depuis 2026-07-01 --jusqua 2026-0
 ---
 
 ## Si ça ne marche pas
+
+**« ubs.csv est un PDF, pas un export texte »**
+On t'a donné le relevé imprimé, pas l'export. Redemande le téléchargement CSV
+depuis l'e-banking.
+
+**« aucune ecriture produite »**
+Le filtre de dates ou la limite ne laisse rien passer. Aucun fichier d'import
+n'est écrit dans ce cas — c'est délibéré : un fichier vide écraserait la
+conversion précédente. Lis le rapport, il dit ce qui a été filtré.
 
 **« en-tête introuvable — ce n'est pas un export UBS »**
 Le fichier n'a pas la structure attendue. Lance `diagnostic.py` dessus et
