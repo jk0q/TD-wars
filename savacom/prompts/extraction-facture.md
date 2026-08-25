@@ -5,16 +5,30 @@ Préparation. Les factures sont hors du périmètre de la première intervention
 
 ## Répartition des rôles
 
-Le modèle **lit** : il transcrit ce qui est écrit sur la facture, y compris ce
-qui est mal imprimé, tordu ou manuscrit. C'est ce que lui seul sait faire.
+Trois tâches différentes se cachent derrière le mot « TVA », et chacune appelle
+un outil différent.
 
-Le modèle **ne valide pas** : la vérification arithmétique est refaite par du
-code, à partir des chiffres extraits. Un modèle qui écrit « je vérifie : 1000 ×
-8,1 % = 81,50 » a produit un raisonnement visible et faux. Recalculer ailleurs
-et comparer est le seul contrôle qui tienne.
+**Lire les montants** — transcription. Seul le modèle sait déchiffrer un scan
+tordu ou une mention manuscrite.
 
-Le raisonnement structuré est présent dans le prompt parce qu'il aide à lire
-correctement une facture multi-taux — pas parce qu'il vérifie quoi que ce soit.
+**Vérifier que les montants tombent juste** — code. Un modèle qui écrit
+« je vérifie : 1000 × 8,1 % = 81,50 » a produit un raisonnement visible et faux.
+Un calcul ne se vérifie pas en le racontant : il se vérifie en le refaisant
+ailleurs et en comparant.
+
+**Attribuer le bon taux à la bonne ligne** — raisonnement structuré. C'est un
+jugement, pas une lecture, et un jugement gagne à être déroulé.
+
+Sur une facture suisse conforme, cette troisième tâche ne se pose pas : la loi
+impose que le taux figure sur le document, on le lit. Elle se pose sur tout le
+reste — tickets de caisse, notes d'hôtel, fournisseurs étrangers — et c'est
+précisément là que le raisonnement gagne sa place.
+
+La limite : le raisonnement sert à **attribuer** un taux parmi ceux que le
+document permet, jamais à en **inventer** un absent. Chaque ligne de TVA porte
+donc un champ `source` valant `"lu"` ou `"deduit"`. Une ligne `"lu"` est une
+transcription ; une ligne `"deduit"` est un jugement, et elle passe sous les yeux
+du comptable. C'est ce qui rend le raisonnement auditable au lieu d'invisible.
 
 ## Taux de TVA suisses
 
@@ -51,6 +65,43 @@ DÉMARCHE
    (format CHE-123.456.789).
 6. Repère la référence QR ou le numéro de facture s'ils sont présents.
 
+ATTRIBUTION DES TAUX
+
+Si le document indique explicitement ses taux, transcris-les et marque chaque
+ligne "source": "lu". C'est le cas normal : la loi suisse impose que le taux
+figure sur une facture conforme.
+
+Si le document n'indique pas de taux, ou en indique un pour plusieurs natures de
+prestation, déroule ton raisonnement avant de répondre, dans cet ordre :
+
+  a. Quelle est la nature de chaque prestation facturée ?
+  b. Le fournisseur est-il assujetti en Suisse ? Un fournisseur étranger sans
+     numéro TVA suisse ne facture pas de TVA suisse — signale-le et laisse
+     "lignes_tva" vide.
+  c. Quel taux correspond à chaque nature ?
+       8.1 %  taux normal — le cas par défaut
+       2.6 %  taux réduit — alimentation à l'emporter, boissons sans alcool,
+              livres, journaux, médicaments
+       3.8 %  hébergement — la nuitée seule, pas les prestations annexes
+  d. Reste-t-il une ambiguïté que le document ne tranche pas ?
+
+Cas fréquents qui demandent ce raisonnement :
+  - Restauration : consommé sur place 8.1 %, emporté 2.6 %. Cherche l'indice
+    dans le document (mention "take away", type d'établissement, service).
+  - Hôtellerie : nuitée 3.8 %, petit-déjeuner et parking 8.1 %. Une note groupée
+    mélange donc plusieurs taux.
+  - Fournisseur étranger : pas de TVA suisse récupérable.
+  - Fournisseur sans numéro TVA : aucune TVA récupérable, même si un montant
+    apparaît.
+
+Toute ligne obtenue par ce raisonnement porte "source": "deduit", et une entrée
+correspondante dans "doutes" expliquant sur quoi tu t'es appuyé. Si le
+raisonnement ne tranche pas, ne choisis pas : laisse la ligne hors du tableau et
+décris l'ambiguïté dans "doutes".
+
+Tu n'inventes jamais un taux qui ne correspond à aucune des trois valeurs
+ci-dessus.
+
 RÈGLES DE LECTURE
 
 - Les montants suisses utilisent l'apostrophe comme séparateur de milliers et le
@@ -80,8 +131,15 @@ avant, aucun texte après, aucun bloc de code, aucun commentaire.
   "devise": string | null,
   "montant_ttc": number | null,
   "lignes_tva": [
-    { "taux": number, "base_ht": number | null, "montant_tva": number | null }
+    {
+      "taux": number,
+      "base_ht": number | null,
+      "montant_tva": number | null,
+      "source": "lu" | "deduit",
+      "justification": string | null
+    }
   ],
+  "fournisseur_assujetti_suisse": boolean | null,
   "est_note_de_credit": boolean,
   "doutes": [
     { "champ": string, "raison": string, "lecture_possible": string | null }
@@ -89,7 +147,11 @@ avant, aucun texte après, aucun bloc de code, aucun commentaire.
   "lisibilite": "bonne" | "moyenne" | "mauvaise"
 }
 
-- "lignes_tva" est un tableau vide si aucune TVA n'apparaît sur le document.
+- "lignes_tva" est un tableau vide si aucune TVA n'apparaît sur le document, ou
+  si le fournisseur n'est pas assujetti en Suisse.
+- "source" vaut "lu" quand le taux est imprimé sur le document, "deduit" quand tu
+  l'as attribué par raisonnement. "justification" est obligatoire pour "deduit"
+  et vaut null pour "lu".
 - "doutes" est un tableau vide seulement si tu as lu chaque champ avec certitude.
 - "lisibilite" décrit la qualité du document, pas ta confiance dans l'extraction.
 
@@ -114,10 +176,16 @@ pièce en doute et interdit l'écriture automatique.
 | Date plausible | comprise dans l'exercice comptable ouvert | strict |
 | Numéro TVA | format `CHE-\d{3}\.\d{3}\.\d{3}` | strict |
 | Montant non nul | `montant_ttc > 0`, sauf note de crédit | strict |
+| Ligne déduite | toute ligne `source: "deduit"` force la relecture humaine | strict |
+| Fournisseur non assujetti | `lignes_tva` doit être vide | strict |
 
 La tolérance de 0.05 absorbe les arrondis légaux au centime. Un écart supérieur
 n'est pas un arrondi : c'est une lecture fausse, ou une facture qui ne tombe pas
 juste — les deux méritent un œil humain.
+
+Le champ `source` sépare deux populations qu'il ne faut jamais confondre dans un
+rapport : ce que le modèle a lu, et ce qu'il a jugé. Le premier se contrôle par
+l'arithmétique ; le second ne se contrôle que par un humain.
 
 ## Ce que ce prompt ne fait pas
 
