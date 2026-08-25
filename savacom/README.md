@@ -16,6 +16,8 @@ justificatifs restent chez le client. Voir `.gitignore`.
 | Comprendre le vocabulaire du projet | [`CONTEXT.md`](./CONTEXT.md) |
 | Savoir pourquoi c'est fait ainsi | [`docs/adr/`](./docs/adr/) — 15 décisions |
 | Intervenir chez le client | [`PROTOCOLE-INTERVENTION.md`](./PROTOCOLE-INTERVENTION.md) |
+| **Les commandes exactes, sur place** | [`COMMANDES.md`](./COMMANDES.md) |
+| Identifier un fichier inconnu | `python diagnostic.py "fichier.csv"` |
 | Convertir un export UBS | `python ubs_vers_winbiz.py --help` |
 
 Trois termes suffisent à ne pas se perdre : un **mandat** est une société dont

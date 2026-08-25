@@ -418,6 +418,12 @@ def main() -> int:
     p.add_argument("--longueur-libelle", type=int, default=60)
     p.add_argument("--longueur-piece", type=int, default=15,
                    help="0 pour ne pas tronquer")
+    p.add_argument("--limite", type=int, default=0, metavar="N",
+                   help="ne produire que les N premieres ecritures (test)")
+    p.add_argument("--depuis", metavar="AAAA-MM-JJ",
+                   help="ne garder que les ecritures a partir de cette date")
+    p.add_argument("--jusqua", metavar="AAAA-MM-JJ",
+                   help="ne garder que les ecritures jusqu a cette date")
     p.add_argument("--entete", action="store_true", help="ecrire la ligne d'en-tete")
     p.add_argument("-o", "--sortie", type=Path)
     args = p.parse_args()
@@ -428,7 +434,22 @@ def main() -> int:
     anomalies_solde = controler_chaine_soldes(groupes)
     anomalies_sous = controler_sous_montants(groupes)
 
+    if args.depuis or args.jusqua:
+        avant = len(groupes)
+        groupes = [
+            (m, sous) for m, sous in groupes
+            if (not args.depuis or (m[C_DATE_COMPTA] or m[C_DATE_TRANS])[:10] >= args.depuis)
+            and (not args.jusqua or (m[C_DATE_COMPTA] or m[C_DATE_TRANS])[:10] <= args.jusqua)
+        ]
+        print(f"filtre de dates : {len(groupes)} transactions retenues sur {avant}")
+
     ecritures = construire_ecritures(groupes, args.longueur_libelle, args.longueur_piece)
+
+    if args.limite:
+        total = len(ecritures)
+        ecritures = ecritures[:args.limite]
+        print(f"LIMITE ACTIVE : {len(ecritures)} ecritures sur {total} — fichier de test, "
+              f"ne pas utiliser en production")
     remarques_piece = desambiguer_pieces(ecritures, args.longueur_piece)
 
     sortie = args.sortie or args.source.with_name(args.source.stem + "_winbiz.csv")
