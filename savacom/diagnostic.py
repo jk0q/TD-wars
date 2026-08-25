@@ -8,6 +8,8 @@ sait dire ce qu'il contient. Ne modifie jamais le fichier.
 
     python diagnostic.py "un fichier.csv"
     python diagnostic.py *.csv
+
+Code de sortie : 0 si tous les fichiers ont pu être analysés, 1 sinon.
 """
 
 from __future__ import annotations
@@ -19,29 +21,52 @@ import re
 import sys
 from pathlib import Path
 
-ENCODAGES = ["utf-8-sig", "utf-8", "cp1252", "latin-1"]
+BOM_UTF8 = b"\xef\xbb\xbf"
 SEPARATEURS = [";", ",", "\t", "|"]
+NOM_SEPARATEUR = {";": "point-virgule", ",": "virgule", "\t": "tabulation", "|": "barre"}
 
 
-def detecter_encodage(brut: bytes) -> tuple[str, str]:
-    """Renvoie (encodage retenu, remarque)."""
-    if brut.startswith(b"\xef\xbb\xbf"):
-        return "utf-8-sig", "BOM UTF-8 present — attention, il pollue le 1er champ"
-    for enc in ENCODAGES:
+def detecter_encodage(brut: bytes) -> tuple[str, str, str]:
+    """Renvoie (encodage pour lire, nom affiché, remarque).
+
+    L'ordre compte. « utf-8-sig » décode aussi bien un fichier SANS BOM :
+    l'essayer en premier ferait passer tout UTF-8 pour un fichier à BOM et
+    rendrait la branche UTF-8 inatteignable. On teste donc le BOM sur les
+    octets, puis l'UTF-8 strict, puis les encodages Windows.
+    """
+    if not brut:
+        return "utf-8", "indeterminable", "fichier vide"
+
+    if brut.startswith(BOM_UTF8):
+        return ("utf-8-sig", "UTF-8 avec BOM",
+                "le BOM pollue le premier champ si on ne le retire pas")
+
+    try:
+        brut.decode("utf-8")
+    except UnicodeDecodeError:
+        pass
+    else:
+        accents = sum(1 for b in brut if b > 127)
+        if accents:
+            return ("utf-8", "UTF-8 sans BOM",
+                    f"{accents} octets accentues ; WinBiz attend de l'ANSI 1252")
+        return ("utf-8", "ASCII", "aucun caractere accentue, compatible partout")
+
+    for enc, nom in (("cp1252", "Windows-1252 (ANSI)"), ("latin-1", "ISO 8859-1")):
         try:
             brut.decode(enc)
         except UnicodeDecodeError:
             continue
-        if enc == "utf-8":
-            accents = sum(1 for b in brut if b > 127)
-            return enc, f"UTF-8 sans BOM ({accents} octets accentues)"
-        return enc, f"{enc} (l'UTF-8 echoue, donc encodage Windows)"
-    return "latin-1", "aucun encodage propre — latin-1 par defaut"
+        return enc, nom, "l'UTF-8 echoue : c'est bien un encodage Windows"
+
+    return "latin-1", "indetermine", "aucun encodage ne convient proprement"
 
 
 def detecter_separateur(texte: str) -> tuple[str, dict]:
     """Le bon séparateur est celui qui donne un nombre de colonnes constant."""
     lignes = [l for l in texte.splitlines() if l.strip()][:60]
+    if not lignes:
+        return "", {}
     scores = {}
     for sep in SEPARATEURS:
         try:
@@ -49,6 +74,8 @@ def detecter_separateur(texte: str) -> tuple[str, dict]:
         except csv.Error:
             continue
         largeurs = collections.Counter(len(r) for r in rows)
+        if not largeurs:
+            continue
         dominante, occurrences = largeurs.most_common(1)[0]
         if dominante < 2:
             continue
@@ -72,18 +99,26 @@ def analyser_colonne(valeurs: list[str]) -> str:
         return "date JJ.MM.AAAA"
     if all(re.fullmatch(r"-?[\d']+[.,]\d{1,2}|-?[\d']+", x) for x in ech):
         apo = any("'" in x for x in ech)
-        virg = any("," in x for x in ech)
-        dec = collections.Counter(
-            len(x.split(".")[-1]) if "." in x else 0 for x in ech
-        )
+        virgule = sum(1 for x in ech if "," in x)
+        point = sum(1 for x in ech if "." in x)
         detail = []
         if apo:
             detail.append("apostrophe de milliers")
-        detail.append("virgule decimale" if virg else "point decimal")
-        if len(dec) > 1:
-            detail.append(f"decimales variables {sorted(dec)}")
+        if virgule and point:
+            detail.append("MELANGE virgule et point decimaux")
+        elif virgule:
+            detail.append("virgule decimale")
+        elif point:
+            detail.append("point decimal")
         else:
-            detail.append(f"{list(dec)[0]} decimale(s)")
+            detail.append("aucune decimale")
+        # Compter les decimales quel que soit le separateur employe.
+        dec = collections.Counter(
+            len(re.split(r"[.,]", x)[-1]) if re.search(r"[.,]", x) else 0
+            for x in ech
+        )
+        detail.append(f"decimales {sorted(dec)}" if len(dec) > 1
+                      else f"{list(dec)[0]} decimale(s)")
         if any(x.startswith("-") for x in ech):
             detail.append("signe negatif present")
         return "montant — " + ", ".join(detail)
@@ -93,11 +128,8 @@ def analyser_colonne(valeurs: list[str]) -> str:
         return "entier"
 
     longueurs = [len(x) for x in ech]
-    uniques = len(set(v))
-    return (
-        f"texte — {min(longueurs)} a {max(longueurs)} caracteres, "
-        f"{uniques} valeur(s) distincte(s)"
-    )
+    return (f"texte — {min(longueurs)} a {max(longueurs)} caracteres, "
+            f"{len(set(v))} valeur(s) distincte(s)")
 
 
 def diagnostiquer(chemin: Path) -> None:
@@ -107,13 +139,30 @@ def diagnostiquer(chemin: Path) -> None:
     print("=" * 74)
     print(f"  taille           : {len(brut):,} octets".replace(",", "'"))
 
-    enc, note = detecter_encodage(brut)
-    print(f"  encodage         : {enc}")
+    enc, nom, note = detecter_encodage(brut)
+    print(f"  encodage         : {nom}")
     print(f"                     {note}")
+
+    if b"\x00" in brut[:4096]:
+        print("  NATURE           : fichier BINAIRE (PDF, image, tableur ?)")
+        print("                     pas un fichier texte, analyse interrompue.")
+        return
+
+    if not brut:
+        print("  lignes           : 0")
+        print("  NATURE           : fichier vide, rien a analyser.")
+        return
 
     crlf = brut.count(b"\r\n")
     lf = brut.count(b"\n") - crlf
-    fin = "CRLF (Windows)" if crlf and not lf else "LF (Unix)" if lf and not crlf else f"MELANGE — {crlf} CRLF et {lf} LF"
+    if crlf and not lf:
+        fin = "CRLF (Windows)"
+    elif lf and not crlf:
+        fin = "LF (Unix)"
+    elif not crlf and not lf:
+        fin = "aucune fin de ligne (fichier d'une seule ligne)"
+    else:
+        fin = f"MELANGE — {crlf} CRLF et {lf} LF"
     print(f"  fin de ligne     : {fin}")
 
     texte = brut.decode(enc, errors="replace")
@@ -127,13 +176,12 @@ def diagnostiquer(chemin: Path) -> None:
         for l in lignes[:20]:
             print("   ", l[:100])
         return
-    nom_sep = {";": "point-virgule", ",": "virgule", "\t": "tabulation", "|": "barre"}[sep]
-    coherence, largeur, largeurs = scores[sep]
-    print(f"  separateur       : {nom_sep}  ({coherence:.0%} des lignes ont {largeur} colonnes)")
+    coherence, largeur, _ = scores[sep]
+    print(f"  separateur       : {NOM_SEPARATEUR[sep]}  "
+          f"({coherence:.0%} des lignes ont {largeur} colonnes)")
 
-    rows = list(csv.reader(lignes, delimiter=sep))
+    rows = list(csv.reader(io.StringIO(texte, newline=""), delimiter=sep))
 
-    # Où commence vraiment la table ?
     i_table = 0
     for i, r in enumerate(rows[:40]):
         if len(r) == largeur and sum(1 for c in r if c.strip()) >= largeur - 1:
@@ -149,6 +197,9 @@ def diagnostiquer(chemin: Path) -> None:
     corps = [r for r in rows[i_table + 1:] if r and any(c.strip() for c in r)]
     print(f"\n  colonnes         : {len(entete)}")
     print(f"  lignes de donnees: {len(corps)}")
+    if not corps:
+        print("  NATURE           : en-tete sans aucune ligne de donnees.")
+        return
 
     reparties = collections.Counter(len(r) for r in corps)
     if len(reparties) > 1:
@@ -159,6 +210,10 @@ def diagnostiquer(chemin: Path) -> None:
         print(f"  PIEGE            : {quotes} champ(s) contiennent le separateur")
         print("                     un decoupage naif casserait ces lignes")
 
+    multi = sum(1 for r in corps for c in r if "\n" in c)
+    if multi:
+        print(f"  PIEGE            : {multi} champ(s) contiennent un retour a la ligne")
+
     vides = [r for r in corps if not r[0].strip()]
     if vides:
         print(f"  A VERIFIER       : {len(vides)} ligne(s) sans valeur en 1re colonne")
@@ -166,11 +221,12 @@ def diagnostiquer(chemin: Path) -> None:
 
     print("\n  COLONNES")
     print("  " + "-" * 70)
-    for i, nom in enumerate(entete):
+    for i, nom_col in enumerate(entete):
         vals = [r[i] for r in corps if len(r) > i]
         remplies = sum(1 for x in vals if x.strip())
         taux = f"{remplies}/{len(vals)}" if vals else "0/0"
-        print(f"   [{i:2}] {(nom.strip() or '(sans titre)')[:26]:<26} {taux:>9}  {analyser_colonne(vals)}")
+        titre = (nom_col.strip() or "(sans titre)")[:26]
+        print(f"   [{i:2}] {titre:<26} {taux:>9}  {analyser_colonne(vals)}")
 
     print("\n  3 PREMIERES LIGNES")
     print("  " + "-" * 70)
@@ -178,7 +234,7 @@ def diagnostiquer(chemin: Path) -> None:
         for i, c in enumerate(r):
             if c.strip():
                 print(f"   [{i:2}] {c[:78]}")
-        print("   " + "·" * 40)
+        print("   " + "." * 40)
     print()
 
 
@@ -186,17 +242,23 @@ def main() -> int:
     if len(sys.argv) < 2:
         print(__doc__)
         return 2
-    sys.stdout.reconfigure(errors="replace")
+    try:
+        sys.stdout.reconfigure(errors="replace")
+    except Exception:
+        pass
+    code = 0
     for arg in sys.argv[1:]:
         chemin = Path(arg)
         if not chemin.is_file():
             print(f"!! introuvable : {arg}")
+            code = 1
             continue
         try:
             diagnostiquer(chemin)
         except Exception as e:
             print(f"!! {chemin.name} : {type(e).__name__} — {e}")
-    return 0
+            code = 1
+    return code
 
 
 if __name__ == "__main__":

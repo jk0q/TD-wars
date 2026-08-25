@@ -14,8 +14,12 @@ if not defined SCRIPT if exist "%~dp0..\ubs_vers_winbiz.py" set SCRIPT=%~dp0..\u
 if not defined SCRIPT goto PASDESCRIPT
 
 set PY=
-where python >nul 2>nul && set PY=python
-if not defined PY where py >nul 2>nul && set PY=py
+where python >nul 2>nul
+if not errorlevel 1 set PY=python
+if defined PY goto PYOK
+where py >nul 2>nul
+if not errorlevel 1 set PY=py
+:PYOK
 if not defined PY goto PASDEPYTHON
 
 set FICHIER=%~1
@@ -51,9 +55,17 @@ echo.
 echo -----------------------------------------------
 "%PY%" "!SCRIPT!" "!FICHIER!" --compte-banque !BANQUE! --compte-attente !ATTENTE! --journal !JOURNAL! !OPTLIM!
 echo -----------------------------------------------
+if errorlevel 1 goto ECHEC
 echo.
+echo   Conversion terminee.
 echo   LISEZ LE RAPPORT AVANT D IMPORTER DANS WINBIZ.
 echo   Il doit afficher : Chaine des soldes OK, et aucune anomalie bloquante.
+goto FINI
+
+:ECHEC
+echo.
+echo   LA CONVERSION A ECHOUE ou a produit un fichier vide.
+echo   Lisez le message ci-dessus. N IMPORTEZ RIEN dans WinBiz.
 goto FINI
 
 :PASDEFICHIER

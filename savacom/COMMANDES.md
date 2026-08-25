@@ -164,7 +164,7 @@ Vérifie dans le rapport que la **variation nette** correspond à
 
 | Option | À quoi ça sert |
 |---|---|
-| `--limite 10` | ne produire que 10 écritures — pour tester |
+| `--limite 10` | ne produire que 10 écritures — le fichier porte alors `_TEST` dans son nom |
 | `--depuis 2026-01-01` | ne prendre qu'à partir d'une date |
 | `--jusqua 2026-06-30` | ne prendre que jusqu'à une date |
 | `--entete` | ajouter une ligne de titres, si WinBiz l'exige |
@@ -202,6 +202,14 @@ gros.
 
 **Python n'est pas trouvé**
 Essaie `python3` au lieu de `python`, ou `py` sur Windows.
+
+**Le script refuse une option**
+Les options sont validées : une date doit être au format `AAAA-MM-JJ`, une
+limite ne peut pas être négative, une longueur de pièce descend au minimum à 4.
+Le message dit lequel et pourquoi.
+
+**Un fichier de test n'écrase jamais le fichier de production.** Avec
+`--limite`, la sortie s'appelle `<fichier>_TEST_winbiz.csv`.
 
 ---
 

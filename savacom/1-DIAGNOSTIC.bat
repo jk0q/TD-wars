@@ -14,8 +14,12 @@ if not defined SCRIPT if exist "%~dp0..\diagnostic.py" set SCRIPT=%~dp0..\diagno
 if not defined SCRIPT goto PASDESCRIPT
 
 set PY=
-where python >nul 2>nul && set PY=python
-if not defined PY where py >nul 2>nul && set PY=py
+where python >nul 2>nul
+if not errorlevel 1 set PY=python
+if defined PY goto PYOK
+where py >nul 2>nul
+if not errorlevel 1 set PY=py
+:PYOK
 if not defined PY goto PASDEPYTHON
 
 if "%~1"=="" goto TOUS
