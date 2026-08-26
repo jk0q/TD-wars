@@ -53,10 +53,13 @@ byte-exacte. Le vérificateur attrape les quatre modes d'échec d'une lecture de
 scan — chiffre mal lu, ligne sautée, page manquante, lecture douteuse — et
 refuse d'écrire un CSV tant qu'un seul contrôle échoue.
 
-**Bloqué sur un fichier.** Les formats **BCN, PostFinance et BCF** n'ont jamais
+**Bloqué sur un fichier.** Les formats **BCN** et **PostFinance** n'ont jamais
 été mesurés. Il faut, par banque, **un export CSV réel qui passe déjà l'import
 d'AE Pro Easy** : c'est la spécification, et rien ne la remplace. Deviner des
 colonnes produirait un fichier rejeté à l'import.
+
+**En attente.** La **BCF** — faible volume. C'était aussi la plus incertaine :
+aucune source publique n'atteste qu'elle produise un CSV (ADR 0017).
 
 **Partiel.** UBS : encodage, fin de ligne, séparateur, nombre de colonnes et
 format des montants sont mesurés ; les noms de colonnes verbatim et les lignes

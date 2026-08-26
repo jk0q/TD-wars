@@ -72,5 +72,19 @@
       "Cela ne prouve pas que le bouton CSV n'existe pas derriere le login.",
       "Cela prouve qu'aucune documentation publique ne le decrit."
     ]
+  },
+  "_priorite": {
+    "etat": "en attente",
+    "decide_le": "2026-08-26",
+    "pourquoi": [
+      "Peu de volume pour l'instant. Decision de Kevin, pas contrainte technique.",
+      "C'etait aussi la banque la plus epineuse : aucune source publique n'atteste",
+      "l'existence d'un export CSV BCF. La mettre en attente evite d'investir sur la",
+      "cible la moins certaine pour le moins de retour.",
+      "",
+      "Rien n'est perdu : la recherche reste enregistree ci-dessous, et la lecture",
+      "comme les controles de la skill sont communs a toutes les banques. Reprendre",
+      "la BCF ne demandera que de remplir ce fichier."
+    ]
   }
 }

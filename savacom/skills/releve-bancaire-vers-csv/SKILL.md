@@ -157,7 +157,7 @@ banque ; la provenance se dit en clair à côté.
 | UBS | `formats/ubs.json` | partiel — mesuré sur un export réel, en-têtes à confirmer |
 | PostFinance | `formats/postfinance.json` | indicatif — structure connue, mais en allemand et datée de 2017 |
 | BCN | `formats/bcn.json` | à compléter — l'export CSV existe, sa structure n'est publiée nulle part |
-| BCF | `formats/bcf.json` | à compléter — l'existence même d'un export CSV n'est attestée nulle part |
+| BCF | `formats/bcf.json` | **en attente** — faible volume, reprise plus tard |
 
 Seul `"statut": "mesure"` autorise l'écriture. Tous les autres états font refuser
 le script, et c'est le point : un format approché produit un fichier rejeté à
