@@ -44,5 +44,32 @@
     "",
     "Attention : ce que la banque documente n'est pas forcement ce qu'AE Pro Easy",
     "accepte. La documentation oriente, l'export reel tranche."
-  ]
+  ],
+  "_recherche": {
+    "date": "2026-08-26",
+    "verdict": "l'export CSV EXISTE, sa structure n'est documentee nulle part",
+    "sources": [
+      "https://www.bcn.ch/sites/default/files/nouveautes-netbanking/BCN_NB18_Tutoriel_Telecharger_un_releve_de_compte.pdf",
+      "https://aide.bcn.ch/hc/fr-ch/articles/25137968086929"
+    ],
+    "type_de_source": "documentation officielle de la banque",
+    "etabli": [
+      "Titre verbatim du tutoriel officiel : « BCN-Netbanking 2018 - Telecharger un",
+      "releve de compte au format PDF, Camt.053, MT940 et CSV ». Le CSV existe donc,",
+      "aux cotes de trois autres formats."
+    ],
+    "non_etabli": [
+      "Le tutoriel ne decrit que la procedure d'ecran : choisir le format, le compte,",
+      "le type de contenu, la periodicite, telecharger. Aucune capture du contenu du",
+      "fichier, aucune colonne nommee.",
+      "La FAQ officielle ne nomme aucun format."
+    ],
+    "ou_il_n_y_a_rien": [
+      "Aucune extension Banana pour la BCN — 39 extensions suisses listees, BCN absente.",
+      "Absente de bexio « toutes les banques », de bank2ynab, d'erpnextswiss.",
+      "Absente du manuel Cresus Banking (167 pages ; seules PostFinance et UBS y sont nommees).",
+      "Le depot BananaAccounting/Switzerland ne contient ni bcn_ ni bcf_."
+    ],
+    "reste_a_voir": "www.bcn.ch/netbanking/assistance/aide-en-ligne etait en maintenance."
+  }
 }

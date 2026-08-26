@@ -44,5 +44,33 @@
     "",
     "Attention : ce que la banque documente n'est pas forcement ce qu'AE Pro Easy",
     "accepte. La documentation oriente, l'export reel tranche."
-  ]
+  ],
+  "_recherche": {
+    "date": "2026-08-26",
+    "verdict": "l'EXISTENCE MEME d'un export CSV n'est attestee nulle part",
+    "sources": [
+      "https://www.bcf.ch/fr/entreprises/services-digitaux/trafic-des-paiements/format-de-fichiers",
+      "https://www.bcf.ch/sites/default/files/documents/paragraphs/overview/guide-ebanking-bcf.pdf"
+    ],
+    "type_de_source": "documentation officielle de la banque",
+    "etabli": [
+      "Page officielle « Format de fichiers » : camt.052, camt.053 (releve de compte",
+      "journalier, hebdomadaire ou mensuel), camt.054, pain.001. Rien d'autre.",
+      "E-banking entreprises, verbatim : « Recuperez vos fichiers de releves (camt.053",
+      "et camt.054) directement depuis l'e-banking ».",
+      "Guide PDF officiel : seule mention d'export = « Selection du type de fichier ISO",
+      "(CAMT) ». Zero occurrence du mot CSV.",
+      "FAQ e-banking francaise et allemande parcourues : aucune question sur l'export."
+    ],
+    "consequence": [
+      "C'est plus fort qu'un format non documente. Si la BCF ne produit pas de CSV,",
+      "aucune quantite de retro-conception ne fera exister une cible. Il faut alors",
+      "soit demander a Cedric ce qu'il charge aujourd'hui pour ce mandat, soit viser",
+      "le camt.053 — voir docs/adr/0017."
+    ],
+    "nuance": [
+      "Cela ne prouve pas que le bouton CSV n'existe pas derriere le login.",
+      "Cela prouve qu'aucune documentation publique ne le decrit."
+    ]
+  }
 }
