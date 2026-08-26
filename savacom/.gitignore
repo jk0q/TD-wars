@@ -1,5 +1,0 @@
-# Aucune donnée client dans le dépôt : relevés, exports bancaires, justificatifs.
-data/
-*.csv
-*.pdf
-!exemples_anonymises/*.csv
