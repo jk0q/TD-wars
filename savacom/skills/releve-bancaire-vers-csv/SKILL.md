@@ -1,11 +1,14 @@
 ---
 name: releve-bancaire-vers-csv
 description: >-
-  Transforme un relevé bancaire suisse reçu en PDF, en scan ou en photo
-  en fichier CSV au format d'export de la banque, prêt à importer dans un
-  logiciel de comptabilité. Couvre BCN, UBS, PostFinance et BCF. Vérifie
-  l'arithmétique du relevé avant d'écrire quoi que ce soit, et refuse de
-  produire un CSV quand les totaux ne tombent pas juste. À utiliser dès
+  Lit un relevé bancaire suisse reçu en PDF, en scan ou en photo, vérifie
+  son arithmétique contre les totaux imprimés, puis le réécrit en CSV au
+  format d'export de la banque pour l'importer dans un logiciel de
+  comptabilité. Lecture et vérification fonctionnent pour n'importe quelle
+  banque ; l'écriture du CSV demande un format mesuré au préalable sur un
+  vrai export de la banque concernée, et la skill le dit clairement quand
+  ce n'est pas le cas plutôt que de produire un fichier approximatif.
+  Mesure aussi le format d'un export bancaire existant. À utiliser dès
   qu'un relevé, un extrait de compte ou un avis bancaire est déposé en PDF
   ou en image et qu'il est question de comptabilité, d'import, d'écritures
   ou de saisie — y compris quand le mot « CSV » n'est jamais prononcé.
@@ -80,6 +83,28 @@ Le document arrive de deux manières, et elles ne se traitent pas pareil :
 Pour chaque ligne du relevé, relève : la date, la date de valeur si elle est
 distincte, le libellé complet, le montant au débit **ou** au crédit, et le
 solde courant s'il est imprimé.
+
+### Les sous-lignes ne sont pas des transactions
+
+C'est le piège principal, et il est silencieux. Un **versement collectif** est
+un seul encaissement — plusieurs clients ont payé, la banque a crédité en une
+fois — que le relevé décompose ensuite en sous-lignes, une par payeur. Ces
+sous-lignes n'ont pas de date propre, sont souvent décalées vers la droite ou
+en plus petit, et **leur somme égale le montant de la ligne au-dessus**.
+
+Une seule écriture existe : la ligne mère. Relever aussi les sous-lignes
+double l'encaissement.
+
+Sur l'export UBS de référence, 121 lignes sur 901 sont des sous-lignes, et la
+somme tombait juste 102 fois sur 102. Ce n'est pas un cas rare.
+
+En cas de doute, le test est arithmétique : **si des lignes voisines
+s'additionnent exactement pour donner celle qui les précède, ce sont ses
+sous-lignes.** Ne relève que la mère, et mets les références des sous-lignes
+dans son libellé si elles portent des références de paiement.
+
+Même chose pour tout ce qui n'est pas une transaction : reports, sous-totaux,
+lignes « solde à nouveau ». Ils ne se relèvent pas.
 
 **Marque ce dont tu n'es pas sûr.** Un chiffre à moitié coupé, un caractère
 ambigu, une ligne à cheval sur deux pages : mets `"confiance": "douteuse"` et

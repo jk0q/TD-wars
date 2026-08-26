@@ -55,9 +55,9 @@
     "decimales": 2,
     "separateur_decimal": ". | ,",
     "separateur_milliers": "aucun | ' | espace",
-    "debit_negatif": "true si les debits portent un signe moins dans une colonne unique"
+    "debit_negatif": "true si la colonne DEBIT porte un signe moins. Sans effet sur une colonne signee unique, qui porte deja son sens. Doit valoir true ou false, jamais du texte."
   },
-  "montant_en_une_colonne": "true = une colonne signee ; false = deux colonnes debit et credit",
+  "montant_en_une_colonne": "Informatif, et verifie : doit s'accorder avec 'colonnes'. true si colonnes contient 'montant', false si elle contient 'debit' et 'credit'.",
   "ordre": "chronologique | anti_chronologique",
   "nom_fichier": "gabarit du nom de fichier, ex. '{iban}_{date}.csv' — certaines banques nomment de facon reconnaissable, et le logiciel peut s'en servir",
   "reconnaissance": [
@@ -69,5 +69,10 @@
     "Tout ce qui a surpris pendant la mesure : sous-lignes, versements",
     "collectifs, champs contenant le separateur, lignes a zero, doublons",
     "de reference. C'est ce qui fera echouer un import six mois plus tard."
+  ],
+  "_champs_non_lus_par_le_script": [
+    "clearing, mesure_sur, nom_fichier, reconnaissance et notes ne sont jamais lus",
+    "par verifier.py. Ils servent a l'humain et au modele qui remplit le fichier.",
+    "Ce n'est pas un oubli."
   ]
 }
