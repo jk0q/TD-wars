@@ -7,7 +7,7 @@
     "au format suppose sera refuse a l'import, et l'utilisateur perdra plus de",
     "temps a comprendre pourquoi qu'il n'en aurait passe a fournir le fichier.",
     "",
-    "Pour mesurer : lancer savacom/diagnostic.py sur l'export reel. Il donne",
+    "Pour mesurer : lancer scripts/diagnostic.py sur l'export reel. Il donne",
     "l'encodage, la fin de ligne, le separateur, le nombre de lignes de",
     "metadonnees, le nombre de colonnes et le format de chaque colonne.",
     "",

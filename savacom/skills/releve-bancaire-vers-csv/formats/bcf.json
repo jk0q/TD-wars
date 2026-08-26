@@ -10,7 +10,7 @@
     "Il faut UN fichier : un export CSV reel du compte BCF, celui qui passe",
     "deja l'import du logiciel comptable sans erreur.",
     "",
-    "Ensuite : python savacom/diagnostic.py \"l'export.csv\"",
+    "Ensuite : python scripts/diagnostic.py \"l'export.csv\"",
     "Le diagnostic donne l'encodage, la fin de ligne, le separateur, le nombre",
     "de lignes de metadonnees, le nombre de colonnes et le format de chacune.",
     "Reporter le tout ici en suivant _MODELE.json, puis passer statut a 'mesure'.",

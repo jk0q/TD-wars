@@ -68,9 +68,14 @@ accepté dans le mauvais compte.
 Lis **toutes les pages**, et vérifie la mention « page N sur M » : un scan
 tronqué est le défaut le plus fréquent et le plus silencieux.
 
-Sur un PDF scanné, fais rendre la page en respectant son attribut `/Rotate`.
-N'extrais jamais l'image embarquée telle quelle — elle est souvent stockée
-pivotée alors que la page s'affiche droite, et tu lirais un document couché.
+Le document arrive de deux manières, et elles ne se traitent pas pareil :
+
+- **Déposé dans la conversation** — tu le vois déjà, page par page. Lis-le tel
+  qu'il t'est présenté.
+- **Un fichier sur le disque** — fais rendre chaque page en respectant son
+  attribut `/Rotate`. N'extrais jamais l'image embarquée telle quelle : elle
+  est souvent stockée pivotée alors que la page s'affiche droite, et tu lirais
+  un document couché.
 
 Pour chaque ligne du relevé, relève : la date, la date de valeur si elle est
 distincte, le libellé complet, le montant au débit **ou** au crédit, et le
@@ -139,8 +144,11 @@ Termine par un court récapitulatif, en clair :
 - ce qui reste incertain, s'il reste quelque chose
 
 L'utilisateur est un comptable : il doit pouvoir tracer d'où vient chaque
-chiffre. Le CSV produit est une **transcription**, pas un export d'origine —
-nomme le fichier de manière à ce que ça se voie, et dis-le dans le récapitulatif.
+chiffre. Le CSV produit est une **transcription**, pas un export d'origine.
+Dis-le dans le récapitulatif — mais **pas dans le nom du fichier** : le
+logiciel qui l'avalera peut se servir du nom pour reconnaître la banque, et un
+suffixe ajouté casserait cette reconnaissance. Le nom suit le gabarit de la
+banque ; la provenance se dit en clair à côté.
 
 ## Fichiers de format disponibles
 
@@ -154,6 +162,34 @@ nomme le fichier de manière à ce que ça se voie, et dis-le dans le récapitul
 Seul `"statut": "mesure"` autorise l'écriture. Tous les autres états font refuser
 le script, et c'est le point : un format approché produit un fichier rejeté à
 l'import, ce qui coûte plus cher à comprendre qu'à éviter.
+
+## Compléter une banque
+
+Un format à l'état `a_completer` ou `indicatif` ne se remplit pas de mémoire.
+Il se **mesure**, sur un vrai export CSV de cette banque — celui qui passe déjà
+l'import du logiciel comptable de l'utilisateur.
+
+Demande-lui ce fichier, puis :
+
+```bash
+python scripts/diagnostic.py "l'export reel.csv"
+```
+
+Le diagnostic donne l'encodage, la fin de ligne, le séparateur, le nombre de
+lignes de métadonnées avant la table, le nombre de colonnes, ce que contient
+chacune, et les pièges — champs contenant le séparateur, sous-lignes,
+colonnes irrégulières.
+
+Reporte le tout dans le fichier de format en suivant `formats/_MODELE.json`,
+en copiant-collant les noms de colonnes plutôt qu'en les retapant : les
+accents, abréviations et espaces comptent. Passe `statut` à `"mesure"`
+seulement quand chaque champ vient d'une observation.
+
+Le même diagnostic sert à identifier n'importe quel fichier qu'on te tend en
+disant « c'est le CSV » — il refuse proprement les PDF, les classeurs Excel et
+les images.
+
+## Fichiers
 
 Pour ajouter une banque ou en compléter une : `formats/_MODELE.json` liste
 tout ce qu'il faut mesurer, et sur quel fichier le mesurer.
