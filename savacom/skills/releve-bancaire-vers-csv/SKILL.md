@@ -146,10 +146,14 @@ nomme le fichier de manière à ce que ça se voie, et dis-le dans le récapitul
 
 | Banque | Fichier | État |
 |---|---|---|
-| UBS | `formats/ubs.json` | mesuré sur un export réel, en-têtes à confirmer |
+| UBS | `formats/ubs.json` | partiel — mesuré sur un export réel, en-têtes à confirmer |
+| PostFinance | `formats/postfinance.json` | indicatif — structure connue, mais en allemand et datée de 2017 |
 | BCN | `formats/bcn.json` | à compléter |
-| PostFinance | `formats/postfinance.json` | à compléter |
 | BCF | `formats/bcf.json` | à compléter |
+
+Seul `"statut": "mesure"` autorise l'écriture. Tous les autres états font refuser
+le script, et c'est le point : un format approché produit un fichier rejeté à
+l'import, ce qui coûte plus cher à comprendre qu'à éviter.
 
 Pour ajouter une banque ou en compléter une : `formats/_MODELE.json` liste
 tout ce qu'il faut mesurer, et sur quel fichier le mesurer.
